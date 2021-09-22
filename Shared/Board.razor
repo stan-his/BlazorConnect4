@@ -1,0 +1,71 @@
+﻿<h1>Connect Four</h1>
+
+
+@using BlazorConnect4.Model;
+
+
+
+@code {
+    GameEngine game = new GameEngine();
+    CellColor currentTurn = CellColor.Red;
+    String message = "";
+
+    private void CollectClick(int x, int y)
+    {
+        if (game.Play(x))
+        {
+            message = game.message;
+        }
+        currentTurn = game.Player;
+    }
+
+
+    private void Restart(String player)
+    {
+        game.Reset(player);
+        message = game.message;
+    }
+
+}
+
+<h2>@game.Player's Turn!</h2>
+
+
+<div class="game">
+    @for (int i = 0; i < 7; i++)
+    {
+        <div class="column">
+            @for (int j = 0; j < 6; j++)
+            {
+                int x = i;
+                int y = j;
+                <div class="cell @game.Board.Grid[i,j].Color.ToString().ToLower()"
+                     @onclick="@(() => CollectClick(x,y))"></div>
+            }
+        </div>
+    }
+</div>
+
+
+<h2>@message</h2>
+
+<button @onclick='(() => Restart("Human"))'>
+    Restart Human vs Human
+</button>
+
+<button @onclick='(() => Restart("Random"))'>
+    Restart Human vs Random AI
+</button>
+<br/>
+
+<button @onclick='(() => Restart("Q1"))'>
+    Restart Human vs EasyRL
+</button>
+
+<button @onclick='(() => Restart("Q2"))'>
+    Restart Human vs ModerateRL
+</button>
+<br/>
+<button @onclick='(() => Restart("Q3"))'>
+    Restart Human vs HardRL
+</button>
