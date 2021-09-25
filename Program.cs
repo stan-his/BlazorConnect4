@@ -15,6 +15,10 @@ namespace BlazorConnect4
     {
         public static void Main(string[] args)
         {
+            if (!Directory.Exists("Data"))
+            {
+                Directory.CreateDirectory("./Data");
+            }
             CreateHostBuilder(args).Build().Run();
         }
 

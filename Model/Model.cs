@@ -82,7 +82,6 @@ namespace BlazorConnect4.Model
                 }
                 else
                 {
-                    Console.WriteLine("Hello");
                     ai = new RandomAI();
                     ai.ToFile("Data/Random.bin");
                 }
