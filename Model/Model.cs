@@ -1,4 +1,5 @@
 ﻿using System;
+using System.IO;
 using BlazorConnect4.AIModels;
 
 namespace BlazorConnect4.Model
@@ -75,7 +76,17 @@ namespace BlazorConnect4.Model
             }
             else if (playAgainst == "Random")
             {
-                ai = new RandomAI();
+                if (File.Exists("Data/Random.bin"))
+                {
+                    ai = RandomAI.ConstructFromFile("Data/Random.bin");
+                }
+                else
+                {
+                    Console.WriteLine("Hello");
+                    ai = new RandomAI();
+                    ai.ToFile("Data/Random.bin");
+                }
+                
             }
             else if (playAgainst == "Q1")
             {
@@ -180,8 +191,8 @@ namespace BlazorConnect4.Model
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    colpos = col - i + j;
-                    rowpos = row - i - j;
+                    colpos = col + i - j;
+                    rowpos = row - i + j;
                     if (0 <= colpos && colpos <= 6 &&
                         0 <= rowpos && rowpos < 6 &&
                         Board.Grid[colpos, rowpos].Color == Player)
@@ -189,7 +200,7 @@ namespace BlazorConnect4.Model
                         score++;
                     }
                 }
-
+                
                 win = win || score == 4;
                 score = 0;
             }
@@ -231,8 +242,6 @@ namespace BlazorConnect4.Model
 
             return false;
         }
-
-
 
 
         private bool PlayNext()
