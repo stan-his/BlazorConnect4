@@ -15,7 +15,6 @@ namespace BlazorConnect4.Model
     public class Cell
     {
         public CellColor Color { get; set; }
-        public double Value { get; set; } = 0;
 
         public Cell(CellColor color)
         {
@@ -57,75 +56,23 @@ namespace BlazorConnect4.Model
 
     }
 
-
-    public class GameEngine
+    public class GameEngineTwo
     {
         public GameBoard Board { get; set; }
-        public CellColor Player { get; set; }
-        public bool active;
-        public String message;
-        private AI ai;
+        public CellColor PlayerTurn { get; set; }
 
+        public AI playerOne;
+        public AI playerTwo;
 
-        public GameEngine()
-        {
-            Reset("Human");
-        }
-
-
-
-        // Reset the game and creats the opponent.
-        // TODO change the code so new RL agents are created.
-        public void Reset(String playAgainst)
+        public GameEngineTwo()
         {
             Board = new GameBoard();
-            Player = CellColor.Red;
-            active = true;
-            message = "Starting new game";
-
-            if (playAgainst == "Human")
-            {
-                ai = null;
-            }
-            else if (playAgainst == "Random")
-            {
-                ai = new RandomAI();
-            }
-            else if (playAgainst == "Q1")
-            {
-                // Change filename to our filename
-                if (File.Exists("Data/Random.bin"))
-                {
-                    // Remove below line and uncomment the one below that
-                    ai = new RandomAI();
-                    //ai = QAgent.ConstructFromFile("Data/Random.bin");
-                }
-                else
-                {
-                    // Change below line to our ai when complete
-                    ai = new RandomAI();
-                    ai.ToFile("Data/Random.bin");
-                }
-            }
-            else if (playAgainst == "Q2")
-            {
-                ai = new RandomAI();
-            }
-            else if (playAgainst == "Q3")
-            {
-                ai = new RandomAI();
-            }
-
         }
-
-
-
 
         public bool IsValid(int col)
         {
             return Board.Grid[col, 0].Color == CellColor.Blank;
         }
-
 
         public bool IsDraw()
         {
@@ -139,7 +86,7 @@ namespace BlazorConnect4.Model
             return true;
         }
 
-        public CellColor NextPlayer(CellColor player)
+        public CellColor OtherPlayer(CellColor player)
         {
             return player == CellColor.Red ? CellColor.Yellow : CellColor.Red;
         }
@@ -202,91 +149,148 @@ namespace BlazorConnect4.Model
             return isWin;
         }
 
-        /*public bool IsWin(int col, int row, CellColor player)
+    }
+
+    public class GameEngine
+    {
+        public GameBoard Board { get; set; }
+        public CellColor Player { get; set; }
+        public bool active;
+        public String message;
+        private AI ai;
+
+
+        public GameEngine()
         {
-            bool win = false;
-            int score = 0;
-            
+            Reset("Human");
+        }
 
-            // Check down
-            if (row < 3)
+
+
+        // Reset the game and creats the opponent.
+        // TODO change the code so new RL agents are created.
+        public void Reset(String playAgainst)
+        {
+            Board = new GameBoard();
+            Player = CellColor.Red;
+            active = true;
+            message = "Starting new game";
+
+            if (playAgainst == "Human")
             {
-                for (int i = row; i <= row + 3; i++)
+                ai = null;
+            }
+            else if (playAgainst == "Random")
+            {
+                ai = new RandomAI();
+            }
+            else if (playAgainst == "Q1")
+            {
+                // Change filename to our filename
+                if (File.Exists("Data/Random.bin"))
                 {
-                    if (Board.Grid[col,i].Color == player)
-                    {
-                        score++;
-                    }
+                    // Remove below line and uncomment the one below that
+                    ai = new RandomAI();
+                    //ai = QAgent.ConstructFromFile("Data/Random.bin");
                 }
-                win = score == 4;
-                score = 0;
+                else
+                {
+                    // Change below line to our ai when complete
+                    ai = new RandomAI();
+                    ai.ToFile("Data/Random.bin");
+                }
+            }
+            else if (playAgainst == "Q2")
+            {
+                ai = new RandomAI();
+            }
+            else if (playAgainst == "Q3")
+            {
+                ai = new RandomAI();
             }
 
-            // Check horizontal
+        }
 
-            int left = Math.Max(col - 3, 0);
+        public bool IsValid(int col)
+        {
+            return Board.Grid[col, 0].Color == CellColor.Blank;
+        }
 
-            for (int i = left; i <= col; i++)
+
+        public bool IsDraw()
+        {
+            for (int i = 0; i < 7; i++)
             {
-                for (int j = 0; j < 4; j++)
+                if (Board.Grid[i, 0].Color == CellColor.Blank)
                 {
-                    if (i+j <= 6 && Board.Grid[i+j,row].Color == player)
+                    return false;
+                }
+            }
+            return true;
+        }
+
+        public CellColor OtherPlayer(CellColor player)
+        {
+            return player == CellColor.Red ? CellColor.Yellow : CellColor.Red;
+        }
+
+        public bool IsWin(CellColor player)
+        {
+            int height = 6;
+            int width = 7;
+            bool isWin = false;
+            // horizontalCheck 
+            for (int j = 0; j < height - 3; j++)
+            {
+                for (int i = 0; i < width; i++)
+                {
+                    if (Board.Grid[i, j].Color == player && Board.Grid[i, j + 1].Color == player && Board.Grid[i, j + 2].Color == player && Board.Grid[i, j + 3].Color == player)
                     {
-                        score++;
+                        isWin = true;
                     }
                 }
-                win = win || score == 4;
-                score = 0;
             }
-
-            // Check left down diagonal
-
-            int colpos;
-            int rowpos;
-
-            for (int i = 0; i < 4; i++)
+            if (isWin == false)
             {
-                for (int j = 0; j < 4; j++)
+                // verticalCheck
+                for (int i = 0; i < width - 3; i++)
                 {
-                    colpos = col - i + j;
-                    rowpos = row - i + j;
-                    if (0 <= colpos && colpos <= 6 &&
-                        0 <= rowpos && rowpos < 6 &&
-                        Board.Grid[colpos,rowpos].Color == player)
+                    for (int j = 0; j < height; j++)
                     {
-                        score++;
+                        if (Board.Grid[i, j].Color == player && Board.Grid[i + 1, j].Color == player && Board.Grid[i + 2, j].Color == player && Board.Grid[i + 3, j].Color == player)
+                        {
+                            isWin = true;
+                        }
                     }
                 }
-
-                win = win || score == 4;
-                score = 0;
             }
-
-            // Check left up diagonal
-
-            for (int i = 0; i < 4; i++)
+            if (isWin == false)
             {
-                for (int j = 0; j < 4; j++)
+                // ascendingDiagonalCheck 
+                for (int i = 3; i < width; i++)
                 {
-                    colpos = col - i + j;
-                    rowpos = row - i - j;
-                    if (0 <= colpos && colpos <= 6 &&
-                        0 <= rowpos && rowpos < 6 &&
-                        Board.Grid[colpos, rowpos].Color == player)
+                    for (int j = 0; j < height - 3; j++)
                     {
-                        score++;
+                        if (Board.Grid[i, j].Color == player && Board.Grid[i - 1, j + 1].Color == player && Board.Grid[i - 2, j + 2].Color == player && Board.Grid[i - 3, j + 3].Color == player)
+                            isWin = true;
                     }
                 }
-
-                win = win || score == 4;
-                score = 0;
             }
 
-            return win;
-        }*/
-
-
-
+            if (isWin == false)
+            {
+                // descendingDiagonalCheck
+                for (int i = 3; i < width; i++)
+                {
+                    for (int j = 3; j < height; j++)
+                    {
+                        if (Board.Grid[i, j].Color == player && Board.Grid[i - 1, j - 1].Color == player && Board.Grid[i - 2, j - 2].Color == player && Board.Grid[i - 3, j - 3].Color == player)
+                            isWin = true;
+                    }
+                }
+            }
+            return isWin;
+        }
 
         public bool Play(int col)
         {
