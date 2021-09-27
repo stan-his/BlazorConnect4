@@ -86,7 +86,7 @@ namespace BlazorConnect4.AIModels
             }
         }
 
-        public void UpdateQValue(Cell[,] grid, int action, float value)
+        public void SetQValue(Cell[,] grid, int action, float value)
         {
             String key = GameBoard.GetHashStringCode(grid);
             if (!Qdict.ContainsKey(key))
@@ -99,8 +99,19 @@ namespace BlazorConnect4.AIModels
 
         }
 
-
         
+        public void UpdateQValue(Cell[,] grid, int action)
+        {
+            String key = GameBoard.GetHashStringCode(grid);
+            float alpha = 0;
+            float gamma = 0;
+            float currentValue = Qdict[key][action];
+            float reward = 0;
+            float maxOfNextMove = 0;
+            SetQValue(grid, action, currentValue + alpha * (reward + gamma * (maxOfNextMove) - currentValue));
+            
+
+        }
 
         // Unnecessary?
         public double GetReward(Cell[,] grid, int action)
