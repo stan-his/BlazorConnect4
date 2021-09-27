@@ -19,7 +19,7 @@ namespace BlazorConnect4
             {
                 Directory.CreateDirectory("./Data");
             }
-            CreateHostBuilder(args).Build().Run();
+            //CreateHostBuilder(args).Build().Run();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -28,5 +28,14 @@ namespace BlazorConnect4
                 {
                     webBuilder.UseStartup<Startup>();
                 });
+
+
+
+        public static void Training()
+            {
+            Model.GameEngineTwo gameEngine = new Model.GameEngineTwo();
+
+
+            }
     }
 }

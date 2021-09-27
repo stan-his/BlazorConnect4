@@ -149,6 +149,21 @@ namespace BlazorConnect4.Model
             return isWin;
         }
 
+
+        public bool MakeMove(int action)
+            {
+            for (int i = 5; i >= 0; i -= 1) 
+                {
+                if(Board.Grid[action, i].Color == CellColor.Blank)
+                    {
+                    Board.Grid[action, i].Color = PlayerTurn; //Make the move
+                    PlayerTurn = OtherPlayer(PlayerTurn);//Switch player
+                    return true;
+                    }
+                }
+            return false;//if a move is not valid    
+            }
+
     }
 
     public class GameEngine

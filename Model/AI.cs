@@ -59,6 +59,8 @@ namespace BlazorConnect4.AIModels
         public Dictionary<String,float[]> Qdict;
         private int reward = 0;
         private GameEngine gameEngine;
+        public float InvalidMoveReward = -1.0F;
+
 
         public QAgent(GameEngine gameEngine)
         {
@@ -143,7 +145,7 @@ namespace BlazorConnect4.AIModels
             return action;
         }
 
-        private int EpsilonGreedyAction(double epsilon, Cell[,] state)
+        public int EpsilonGreedyAction(double epsilon, Cell[,] state)
         {
             Random random = new Random();
             if (random.NextDouble() < epsilon)
@@ -221,7 +223,49 @@ namespace BlazorConnect4.AIModels
             //temp.generator = new Random();
             return temp;
         }
-        
+
+
+       public void Workout(GameEngineTwo gameEngine, AI oppositeAi, int Iterations)
+            {
+            gameEngine.Board = new GameBoard(); // reset gameBoard
+            
+            for(int i = 0; i < Iterations; i++)
+                {
+                bool terminal = false;
+                while (!terminal) 
+                    {
+                    float reward = 0 ;
+                    int action = this.EpsilonGreedyAction(0.5,gameEngine.Board.Grid);
+                    bool isValidAction = gameEngine.MakeMove(action);
+                    String key = GameBoard.GetHashStringCode(gameEngine.Board.Grid);
+                    if (!isValidAction)//if the game was a invalid action give all moves from here a negative reward.
+                        {
+                        
+                        float[] actionValues = { InvalidMoveReward,
+                            InvalidMoveReward,
+                            InvalidMoveReward,
+                            InvalidMoveReward,
+                            InvalidMoveReward,
+                            InvalidMoveReward,
+                            InvalidMoveReward,
+                            InvalidMoveReward };
+
+                        Qdict[key] = actionValues;
+                        reward = InvalidMoveReward;
+                        terminal = true; ; //the move was terminal becuase it was a wrong move;
+                        }
+                    else if (true)//TODO  if the game is terminal quit here and give the reward for all actions in this state.
+                        {
+                        terminal = true;
+                        }
+                    else
+                        {
+                        UpdateQValue(gameEngine.Board.Grid,action);
+
+                        }
+                    }
+                }
+            } 
     }
         
 }
