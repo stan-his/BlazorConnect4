@@ -35,10 +35,6 @@ namespace BlazorConnect4.AIModels
         }
     }
 
-    public interface IQLearning
-    {
-      
-    }
 
     [Serializable]
     public class RandomAI : AI
