@@ -14,7 +14,8 @@ namespace BlazorConnect4.Model
 
     public class Cell
     {
-        public CellColor Color {get; set;}
+        public CellColor Color { get; set; }
+        public double Value { get; set; } = 0;
 
         public Cell(CellColor color)
         {
@@ -41,6 +42,18 @@ namespace BlazorConnect4.Model
             }
         }
 
+        public static String GetHashStringCode(Cell[,] grid)
+        {
+            System.Text.StringBuilder sb = new System.Text.StringBuilder();
+            for (int i = 0; i <= 6; i++)
+            {
+                for (int j = 0; j <= 5; j++)
+                {
+                    sb.Append(grid[i, j]);
+                }
+            }
+            return sb.ToString();
+        }
 
     }
 
@@ -76,20 +89,21 @@ namespace BlazorConnect4.Model
             }
             else if (playAgainst == "Random")
             {
-                if (File.Exists("Data/Random.bin"))
-                {
-                    ai = RandomAI.ConstructFromFile("Data/Random.bin");
-                }
-                else
-                {
-                    ai = new RandomAI();
-                    ai.ToFile("Data/Random.bin");
-                }
-                
+                ai = new RandomAI();
             }
             else if (playAgainst == "Q1")
             {
-                ai = new RandomAI();
+                // Change filename to our filename
+                if (File.Exists("Data/Random.bin"))
+                {
+                    ai = QAgent.ConstructFromFile("Data/Random.bin");
+                }
+                else
+                {
+                    // Change below line to our ai when complete
+                    ai = new RandomAI();
+                    ai.ToFile("Data/Random.bin");
+                }
             }
             else if (playAgainst == "Q2")
             {
@@ -105,7 +119,7 @@ namespace BlazorConnect4.Model
 
 
 
-        private bool IsValid(int col)
+        public bool IsValid(int col)
         {
             return Board.Grid[col, 0].Color == CellColor.Blank;
         }
@@ -190,8 +204,8 @@ namespace BlazorConnect4.Model
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    colpos = col + i - j;
-                    rowpos = row - i + j;
+                    colpos = col - i + j;
+                    rowpos = row - i - j;
                     if (0 <= colpos && colpos <= 6 &&
                         0 <= rowpos && rowpos < 6 &&
                         Board.Grid[colpos, rowpos].Color == Player)
@@ -199,7 +213,7 @@ namespace BlazorConnect4.Model
                         score++;
                     }
                 }
-                
+
                 win = win || score == 4;
                 score = 0;
             }
@@ -241,6 +255,8 @@ namespace BlazorConnect4.Model
 
             return false;
         }
+
+
 
 
         private bool PlayNext()

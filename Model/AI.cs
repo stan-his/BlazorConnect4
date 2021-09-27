@@ -1,14 +1,14 @@
 ﻿using System;
-using System.IO;
 using BlazorConnect4.Model;
-using System.Threading.Tasks;
+using System.Collections.Generic;
+using System.IO;
 
 namespace BlazorConnect4.AIModels
 {
     [Serializable]
     public abstract class AI
     {
-        // Funktion för att bestämma vilken handling som ska genomföras.
+        // Funktion för att beskriva 
         public abstract int SelectMove(Cell[,] grid);
 
         // Funktion för att skriva till fil.
@@ -33,10 +33,7 @@ namespace BlazorConnect4.AIModels
             return returnAI;
 
         }
-
     }
-
-
 
     [Serializable]
     public class RandomAI : AI
@@ -52,12 +49,108 @@ namespace BlazorConnect4.AIModels
         {
             return generator.Next(7);
         }
+    }
 
-        public static RandomAI ConstructFromFile(string fileName)
+    [Serializable]
+    public class QAgent : AI
+    {
+
+        public Dictionary<String,float> Qdict;
+        private int reward = 0;
+        private GameEngine gameEngine;
+
+        public QAgent(GameEngine gameEngine)
         {
-            RandomAI temp = (RandomAI)(AI.FromFile(fileName));
+            this.gameEngine = gameEngine;
+            Qdict = new Dictionary<String, float>();
+        }
+
+        public float GetQValue()
+        {
+            return 0.1F;
+        }
+
+        // Unnecessary?
+        public double GetReward(Cell[,] grid, int action)
+        {
+            return 0;
+        }
+        /*public double GetReward(int action)
+        {
+            //GameBoard.GetHashStringCode(gameEngine.Board.Grid);
+            return 0;
+        }*/
+        public int QLearning (Cell[,] grid)
+        {
+            String currentBoard = GameBoard.GetHashStringCode(grid);
+
+            double qValue = 0F;
+            int move = -1;
+            //GameEngine gameEngine = new GameEngine();
+            
+            for (int col = 0; col < 7; col++)
+            {
+                // Search for the columns with the highest reward that is a legal move
+                qValue = GetReward(grid, col) > qValue && gameEngine.IsValid(col) ? GetReward(grid, col) : qValue;
+            }
+            return 0;
+        } 
+        public override int SelectMove(Cell[,] grid)
+        {
+            return QLearning(grid);
+        }
+
+        public int[] GetValidActions(Cell[,] currentState)
+        {
+            List<int> validActions = new List<int>();
+            for (int i = 0; i < 7; i++)
+            {
+                if (gameEngine.IsValid(i))
+                    validActions.Add(i);
+            }
+            return validActions.ToArray();
+        }
+
+
+        public static void TrainAgents(int numberOfIterations)
+        {
+            for (int i = 0; i < numberOfIterations; i++)
+            {
+
+            }
+        }
+
+        private void InitializeEpisode (int initialState)
+        {
+            int currentState = initialState;
+            while (true)
+            {
+                bool isFinished = false;
+                currentState = TakeAction(currentState);
+                if (isFinished)
+                    break;
+            }   
+        }
+
+        private int TakeAction (Cell[,] currentState)
+        {
+            int[] validActions = GetValidActions(currentState);
+            int randomIndexAction = random.Next(0, validActions.Length);
+            int action = validActions[randomIndexAction];
+            int gamma = 0;
+
+            double saReward = GetReward(currentState, action);
+            double nsReward = qTable[action].Max();
+            double qCurrentState = saReward + (gamma * nsReward);
+            qTable[currentState][action] = qCurrentState;
+            int newState = action;
+            return newState;
+        }
+        public static QAgent ConstructFromFile(string fileName)
+        {
+            QAgent temp = (QAgent)(AI.FromFile(fileName));
             // Eftersom generatorn inte var serialiserad.
-            temp.generator = new Random();
+            //temp.generator = new Random();
             return temp;
         }
     }
