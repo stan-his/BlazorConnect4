@@ -35,6 +35,11 @@ namespace BlazorConnect4.AIModels
         }
     }
 
+    public interface IQLearning
+    {
+      
+    }
+
     [Serializable]
     public class RandomAI : AI
     {
@@ -55,20 +60,51 @@ namespace BlazorConnect4.AIModels
     public class QAgent : AI
     {
 
-        public Dictionary<String,float> Qdict;
+        public Dictionary<String,float[]> Qdict;
         private int reward = 0;
         private GameEngine gameEngine;
 
         public QAgent(GameEngine gameEngine)
         {
             this.gameEngine = gameEngine;
-            Qdict = new Dictionary<String, float>();
+            Qdict = new Dictionary<String,float[]>();
         }
 
-        public float GetQValue()
+       
+        
+
+
+        public float GetQValue(Cell[,] grid , int action)
         {
-            return 0.1F;
+
+            String key = GameBoard.GetHashStringCode(grid);
+            if (Qdict.ContainsKey(key))
+            {
+                return Qdict[key][action];
+            }
+            else
+            {
+                float[] actions = { 0, 0, 0, 0, 0, 0, 0 }; // fill array with zeros
+                Qdict.Add(key, actions);
+                return 0;
+            }
         }
+
+        public void UpdateQValue(Cell[,] grid, int action, float value)
+        {
+            String key = GameBoard.GetHashStringCode(grid);
+            if (!Qdict.ContainsKey(key))
+            {
+                float[] actions = { 0, 0, 0, 0, 0, 0, 0 }; // fill array with zeros
+                Qdict.Add(key, actions);
+
+            }
+            Qdict[key][action] = value;
+
+        }
+
+
+        
 
         // Unnecessary?
         public double GetReward(Cell[,] grid, int action)
