@@ -163,6 +163,11 @@ namespace BlazorConnect4.AIModels
             }
         }
 
+
+        public void EpsilionGreedyQlearning(float alpha, float gamma, int iterations)
+        {
+
+        }
         private void InitializeEpisode (int initialState)
         {
             int currentState = initialState;
@@ -173,6 +178,24 @@ namespace BlazorConnect4.AIModels
                 if (isFinished)
                     break;
             }   
+        }
+
+        public int GetBestAction(Cell[,] state)
+        {
+            String key = GameBoard.GetHashStringCode(state);
+
+            int action = 0;
+            float value = Qdict[key][0];
+            for (int i = 1; i < 7; i++)
+            {
+                if (Qdict[key][i] > value)
+                {
+                    action = i;
+                    value = Qdict[key][i];
+                }
+
+            }
+            return action;
         }
 
         private int TakeAction (Cell[,] currentState)
