@@ -61,7 +61,7 @@ namespace BlazorConnect4.Model
     public class GameEngine
     {
         public GameBoard Board { get; set; }
-        public CellColor Player { get; set;}
+        public CellColor Player { get; set; }
         public bool active;
         public String message;
         private AI ai;
@@ -96,7 +96,9 @@ namespace BlazorConnect4.Model
                 // Change filename to our filename
                 if (File.Exists("Data/Random.bin"))
                 {
-                    ai = QAgent.ConstructFromFile("Data/Random.bin");
+                    // Remove below line and uncomment the one below that
+                    ai = new RandomAI();
+                    //ai = QAgent.ConstructFromFile("Data/Random.bin");
                 }
                 else
                 {
@@ -129,7 +131,7 @@ namespace BlazorConnect4.Model
         {
             for (int i = 0; i < 7; i++)
             {
-                if (Board.Grid[i,0].Color == CellColor.Blank)
+                if (Board.Grid[i, 0].Color == CellColor.Blank)
                 {
                     return false;
                 }
@@ -137,8 +139,70 @@ namespace BlazorConnect4.Model
             return true;
         }
 
+        public CellColor NextPlayer(CellColor player)
+        {
+            return player == CellColor.Red ? CellColor.Yellow : CellColor.Red;
+        }
 
-        public bool IsWin(int col, int row)
+        public bool IsWin(CellColor player)
+        {
+            int height = 6;
+            int width = 7;
+            bool isWin = false;
+            // horizontalCheck 
+            for (int j = 0; j < height - 3; j++)
+            {
+                for (int i = 0; i < width; i++)
+                {
+                    if (Board.Grid[i, j].Color == player && Board.Grid[i, j + 1].Color == player && Board.Grid[i, j + 2].Color == player && Board.Grid[i, j + 3].Color == player)
+                    {
+                        isWin = true;
+                    }
+                }
+            }
+            if (isWin == false)
+            {
+                // verticalCheck
+                for (int i = 0; i < width - 3; i++)
+                {
+                    for (int j = 0; j < height; j++)
+                    {
+                        if (Board.Grid[i, j].Color == player && Board.Grid[i + 1, j].Color == player && Board.Grid[i + 2, j].Color == player && Board.Grid[i + 3, j].Color == player)
+                        {
+                            isWin = true;
+                        }
+                    }
+                }
+            }
+            if (isWin == false)
+            {
+                // ascendingDiagonalCheck 
+                for (int i = 3; i < width; i++)
+                {
+                    for (int j = 0; j < height - 3; j++)
+                    {
+                        if (Board.Grid[i, j].Color == player && Board.Grid[i - 1, j + 1].Color == player && Board.Grid[i - 2, j + 2].Color == player && Board.Grid[i - 3, j + 3].Color == player)
+                            isWin = true;
+                    }
+                }
+            }
+
+            if (isWin == false)
+            {
+                // descendingDiagonalCheck
+                for (int i = 3; i < width; i++)
+                {
+                    for (int j = 3; j < height; j++)
+                    {
+                        if (Board.Grid[i, j].Color == player && Board.Grid[i - 1, j - 1].Color == player && Board.Grid[i - 2, j - 2].Color == player && Board.Grid[i - 3, j - 3].Color == player)
+                            isWin = true;
+                    }
+                }
+            }
+            return isWin;
+        }
+
+        /*public bool IsWin(int col, int row, CellColor player)
         {
             bool win = false;
             int score = 0;
@@ -149,7 +213,7 @@ namespace BlazorConnect4.Model
             {
                 for (int i = row; i <= row + 3; i++)
                 {
-                    if (Board.Grid[col,i].Color == Player)
+                    if (Board.Grid[col,i].Color == player)
                     {
                         score++;
                     }
@@ -166,7 +230,7 @@ namespace BlazorConnect4.Model
             {
                 for (int j = 0; j < 4; j++)
                 {
-                    if (i+j <= 6 && Board.Grid[i+j,row].Color == Player)
+                    if (i+j <= 6 && Board.Grid[i+j,row].Color == player)
                     {
                         score++;
                     }
@@ -188,7 +252,7 @@ namespace BlazorConnect4.Model
                     rowpos = row - i + j;
                     if (0 <= colpos && colpos <= 6 &&
                         0 <= rowpos && rowpos < 6 &&
-                        Board.Grid[colpos,rowpos].Color == Player)
+                        Board.Grid[colpos,rowpos].Color == player)
                     {
                         score++;
                     }
@@ -208,7 +272,7 @@ namespace BlazorConnect4.Model
                     rowpos = row - i - j;
                     if (0 <= colpos && colpos <= 6 &&
                         0 <= rowpos && rowpos < 6 &&
-                        Board.Grid[colpos, rowpos].Color == Player)
+                        Board.Grid[colpos, rowpos].Color == player)
                     {
                         score++;
                     }
@@ -219,14 +283,15 @@ namespace BlazorConnect4.Model
             }
 
             return win;
-        }
+        }*/
 
 
 
 
         public bool Play(int col)
         {
-            if (IsValid(col) && active){
+            if (IsValid(col) && active)
+            {
 
                 for (int i = 5; i >= 0; i--)
                 {
@@ -234,7 +299,8 @@ namespace BlazorConnect4.Model
                     {
                         Board.Grid[col, i].Color = Player;
 
-                        if (IsWin(col,i))
+                        if (IsWin(Player))
+                        //if (IsWin(col, i, Player))
                         {
                             message = Player.ToString() + " Wins";
                             active = false;
@@ -275,7 +341,7 @@ namespace BlazorConnect4.Model
             {
                 int move = ai.SelectMove(Board.Grid);
 
-                while (! IsValid(move))
+                while (!IsValid(move))
                 {
                     move = ai.SelectMove(Board.Grid);
                 }
