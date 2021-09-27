@@ -161,6 +161,7 @@ namespace BlazorConnect4.AIModels
             {
 
             }
+
         }
 
 
@@ -196,6 +197,23 @@ namespace BlazorConnect4.AIModels
 
             }
             return action;
+        }
+
+        private int EpsilonGreedyAction(double epsilon, Cell[,] state)
+        {
+            String key = GameBoard.GetHashStringCode(state);
+            Random random = new Random();
+            
+            if (random.NextDouble() < epsilon)
+            {
+                // Make a random move
+                return random.Next(0, 7);
+            }
+            else
+            {
+                // Make highest valued move
+                return GetBestAction(state);
+            }
         }
 
         private int TakeAction (Cell[,] currentState)
