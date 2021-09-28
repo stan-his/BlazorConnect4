@@ -243,21 +243,12 @@ namespace BlazorConnect4.AIModels
                     
                     String stateKey = GameBoard.GetHashStringCode(gameEngine.Board.Grid);
                     GameBoard currentBoard = gameEngine.Board.Copy();
-                    String stateAfterActionKey = GameBoard.GetHashStringCode(gameEngine.Board.Grid);
+                    
 
                     if (!isValidAction)//if the game was a invalid action give all moves from here a negative reward.
                         {
-                        float[] actionValues = { 
-                            InvalidMoveReward,
-                            InvalidMoveReward,
-                            InvalidMoveReward,
-                            InvalidMoveReward,
-                            InvalidMoveReward,
-                            InvalidMoveReward,
-                            InvalidMoveReward,
-                            InvalidMoveReward };
 
-                        Qdict[stateAfterActionKey] = actionValues;
+                        Qdict[stateKey][action] = InvalidMoveReward;
                         terminal = true; //the move was terminal becuase it was a wrong move;
                         }
                     else if (true)//TODO  if the game is terminal quit here and give the reward for all actions in this state.
