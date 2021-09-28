@@ -62,9 +62,9 @@ namespace BlazorConnect4.AIModels
         public float InvalidMoveReward = -1.0F;
 
 
-        public QAgent(GameEngine gameEngine)
+        public QAgent()
         {
-            this.gameEngine = gameEngine;
+           
             Qdict = new Dictionary<String,float[]>();
         }
 
@@ -227,21 +227,28 @@ namespace BlazorConnect4.AIModels
 
        public void Workout(GameEngineTwo gameEngine, AI oppositeAi, int Iterations)
             {
-            gameEngine.Board = new GameBoard(); // reset gameBoard
+            
             
             for(int i = 0; i < Iterations; i++)
                 {
+
+                //new Iteration => choose a new action and check if the action is valid
+                gameEngine.Board = new GameBoard();
                 bool terminal = false;
+                int action = this.EpsilonGreedyAction(0.5, gameEngine.Board.Grid);
+                bool isValidAction = gameEngine.MakeMove(action);
+
                 while (!terminal) 
                     {
-                    float reward = 0 ;
-                    int action = this.EpsilonGreedyAction(0.5,gameEngine.Board.Grid);
-                    bool isValidAction = gameEngine.MakeMove(action);
-                    String key = GameBoard.GetHashStringCode(gameEngine.Board.Grid);
+                    
+                    String stateKey = GameBoard.GetHashStringCode(gameEngine.Board.Grid);
+                    GameBoard currentBoard = gameEngine.Board.Copy();
+                    String stateAfterActionKey = GameBoard.GetHashStringCode(gameEngine.Board.Grid);
+
                     if (!isValidAction)//if the game was a invalid action give all moves from here a negative reward.
                         {
-                        
-                        float[] actionValues = { InvalidMoveReward,
+                        float[] actionValues = { 
+                            InvalidMoveReward,
                             InvalidMoveReward,
                             InvalidMoveReward,
                             InvalidMoveReward,
@@ -250,9 +257,8 @@ namespace BlazorConnect4.AIModels
                             InvalidMoveReward,
                             InvalidMoveReward };
 
-                        Qdict[key] = actionValues;
-                        reward = InvalidMoveReward;
-                        terminal = true; ; //the move was terminal becuase it was a wrong move;
+                        Qdict[stateAfterActionKey] = actionValues;
+                        terminal = true; //the move was terminal becuase it was a wrong move;
                         }
                     else if (true)//TODO  if the game is terminal quit here and give the reward for all actions in this state.
                         {
@@ -260,7 +266,31 @@ namespace BlazorConnect4.AIModels
                         }
                     else
                         {
-                        UpdateQValue(gameEngine.Board.Grid,action);
+                        float reward = 0; //there are no rewards in a standard state, only in terminal states;
+                        float gamma = 0;
+                        float alpha = 0.02F;
+                        float currentVal = Qdict[stateKey][action];
+
+                        //The Q value for best next move
+                        GameBoard nextBoardState = gameEngine.Board.Copy();
+                        int bestAction = GetBestAction(nextBoardState.Grid);
+                        GameEngineTwo.MakeMove(ref nextBoardState, gameEngine.PlayerTurn, bestAction);
+                        String keyStuff = GameBoard.GetHashStringCode(nextBoardState.Grid);
+                        float maxQvalueNextState = Qdict[keyStuff][bestAction];
+                        //update value
+                        Qdict[stateKey][action] = currentVal + alpha * (reward + gamma + maxQvalueNextState - currentVal);
+
+
+
+                        //we should make a new move and then let the opponent make a move
+
+                        action = this.EpsilonGreedyAction(0.5, gameEngine.Board.Grid);
+                        gameEngine.MakeMove(action);
+                        int opponentACtion = oppositeAi.SelectMove(gameEngine.Board.Grid);
+                        gameEngine.MakeMove(opponentACtion);
+
+
+                        isValidAction = gameEngine.MakeMove(action);
 
                         }
                     }

@@ -34,6 +34,12 @@ namespace BlazorConnect4
         public static void Training()
             {
             Model.GameEngineTwo gameEngine = new Model.GameEngineTwo();
+            AIModels.QAgent leAgent = new AIModels.QAgent();
+            AIModels.RandomAI randomAI = new AIModels.RandomAI();
+            leAgent.Workout(gameEngine, randomAI, 1000);
+
+
+            leAgent.ToFile("Data/AwesomeAgent.bin");
 
 
             }

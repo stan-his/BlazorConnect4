@@ -1,6 +1,7 @@
 ﻿using System;
 using System.IO;
 using BlazorConnect4.AIModels;
+using System.Linq;
 
 namespace BlazorConnect4.Model
 {
@@ -41,6 +42,21 @@ namespace BlazorConnect4.Model
             }
         }
 
+        public  GameBoard Copy() //TODO check so that this actually copies the values and not the references
+        {
+            GameBoard copy = new GameBoard();
+
+            for (int i = 0; i <= 6; i++)
+            {
+                for (int j = 0; j <= 5; j++)
+                {
+                    copy.Grid[i, j] = this.Grid[i, j];
+                }
+            }
+            return copy;
+
+        }
+
         public static String GetHashStringCode(Cell[,] grid)
         {
             System.Text.StringBuilder sb = new System.Text.StringBuilder();
@@ -53,6 +69,8 @@ namespace BlazorConnect4.Model
             }
             return sb.ToString();
         }
+
+
 
     }
 
@@ -86,7 +104,7 @@ namespace BlazorConnect4.Model
             return true;
         }
 
-        public CellColor OtherPlayer(CellColor player)
+        public static CellColor OtherPlayer(CellColor player)
         {
             return player == CellColor.Red ? CellColor.Yellow : CellColor.Red;
         }
@@ -163,6 +181,23 @@ namespace BlazorConnect4.Model
                 }
             return false;//if a move is not valid    
             }
+        public static bool MakeMove(ref GameBoard board,CellColor playerColor, int action)
+        {
+            for (int i = 5; i >= 0; i -= 1)
+            {
+                if (board.Grid[action, i].Color == CellColor.Blank)
+                {
+                    board.Grid[action, i].Color = playerColor; //Make the move
+                    
+                    return true;
+                }
+            }
+            return false;//if a move is not valid    
+        }
+
+
+
+
 
     }
 
