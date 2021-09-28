@@ -22,7 +22,7 @@ namespace BlazorConnect4.AIModels
         }
 
         // Funktion för att att läsa från fil.
-        protected static AI FromFile(string fileName)
+        public static AI FromFile(string fileName)
         {
             AI returnAI;
             using (Stream stream = File.Open(fileName, FileMode.Open))
@@ -58,7 +58,7 @@ namespace BlazorConnect4.AIModels
 
         public Dictionary<String,float[]> Qdict;
         private float reward = 0F;
-        private GameEngine gameEngine;
+
         public float InvalidMoveReward = -1.0F;
         public float WinningMoveReward = 1F;
         public float LosingMoveReward = -1F;
@@ -104,16 +104,7 @@ namespace BlazorConnect4.AIModels
         }
 
         
-        public void UpdateQValue(Cell[,] grid, int action)
-        {
-            String key = GameBoard.GetHashStringCode(grid);
-            float alpha = 0;
-            float gamma = 0;
-            float currentValue = Qdict[key][action];
-            float reward = 0;
-            float maxOfNextMove = 0;
-            SetQValue(grid, action, currentValue + alpha * (reward + gamma * (maxOfNextMove) - currentValue));
-        }
+
 
         public double GetReward(Cell[,] grid, int action)
         {
@@ -124,10 +115,7 @@ namespace BlazorConnect4.AIModels
             reward = terminalReward;
         }
         
-        public int QLearning (Cell[,] grid)
-        {
-            return 0;
-        }
+
         public override int SelectMove(Cell[,] grid)
         {
             double epsilon = 0.99;
@@ -136,16 +124,17 @@ namespace BlazorConnect4.AIModels
 
         public int GetBestAction(Cell[,] state)
         {
-            String key = GameBoard.GetHashStringCode(state);
+            
 
             int action = 0;
-            float value = Qdict[key][0];
+            
+            float value = GetQValue(state, 0);
             for (int i = 1; i < 7; i++)
             {
-                if (Qdict[key][i] > value)
+                if (GetQValue(state, i) > value)
                 {
                     action = i;
-                    value = Qdict[key][i];
+                    value = GetQValue(state, i);
                 }
             }
             return action;
@@ -237,44 +226,47 @@ namespace BlazorConnect4.AIModels
             
             for(int i = 0; i < Iterations; i++)
                 {
-
+                Console.WriteLine(i);
                 //new Iteration => choose a new action and check if the action is valid
                 gameEngine.Board = new GameBoard();
                 bool terminal = false;
                 // Reward defaults to zero
-                SetReward();
-                int action = this.EpsilonGreedyAction(0.5, gameEngine.Board.Grid);
-                bool isValidAction = gameEngine.MakeMove(action);
+               
+                int action = this.EpsilonGreedyAction(1, gameEngine.Board.Grid);
+                GameBoard boardCopy = gameEngine.Board.Copy();
+                bool isValidAction = GameEngineTwo.MakeMove(ref boardCopy,gameEngine.PlayerTurn,action);
 
                 while (!terminal) 
                     {
                     
-                    String stateKey = GameBoard.GetHashStringCode(gameEngine.Board.Grid);
-                    GameBoard currentBoard = gameEngine.Board.Copy();
+                   
+                    
                     
                     if (!isValidAction)//if the game was a invalid action give all moves from here a negative reward.
                         {
-                        SetReward(InvalidMoveReward);
-                        Qdict[stateKey][action] = InvalidMoveReward;
+                        
+                        SetQValue(gameEngine.Board.Grid, action, InvalidMoveReward);
+                        
                         terminal = true; //the move was terminal becuase it was a wrong move;
                         }
                     else if (gameEngine.IsWin(gameEngine.PlayerTurn))//TODO  if the game is terminal quit here and give the reward for all actions in this state.
                         {
-                        SetReward(WinningMoveReward);
-                        Qdict[stateKey][action] = WinningMoveReward;
+                        
+                        SetQValue(gameEngine.Board.Grid, action, WinningMoveReward);
+                       
                         terminal = true;
                         }
                     else if (gameEngine.IsWin(GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn)))
                     {
-                        SetReward(LosingMoveReward);
-                        Qdict[stateKey][action] = LosingMoveReward;
+                        
+                        SetQValue(gameEngine.Board.Grid, action, LosingMoveReward);
                         terminal = true;
                     }
                     else
                         {
-                        float gamma = 0;
-                        float alpha = 0.02F;
-                        float currentVal = Qdict[stateKey][action];
+                        float gamma = 0.9F;
+                        float alpha = 0.5F;
+                        float currentVal = GetQValue(gameEngine.Board.Grid, action);
 
                         //The Q value for best next move
                         GameBoard nextBoardState = gameEngine.Board.Copy();
@@ -282,16 +274,13 @@ namespace BlazorConnect4.AIModels
                         GameEngineTwo.MakeMove(ref nextBoardState, gameEngine.PlayerTurn, bestAction);
                         int oppositeAction =  oppositeAi.SelectMove(nextBoardState.Grid);
                         GameEngineTwo.MakeMove(ref nextBoardState, GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn),oppositeAction);
-
-                        String keyStuff = GameBoard.GetHashStringCode(nextBoardState.Grid);
-                        float maxQvalueNextState = Qdict[keyStuff][bestAction];
+                        float maxQvalueNextState = GetQValue(nextBoardState.Grid,bestAction);
                         //update value
-                        Qdict[stateKey][action] = currentVal + alpha * (reward + gamma + maxQvalueNextState - currentVal);
-
+                        SetQValue(gameEngine.Board.Grid, action, currentVal + alpha * (gamma + maxQvalueNextState - currentVal));
                         
                         //we should make a new move and then let the opponent make a move
 
-                        action = this.EpsilonGreedyAction(0.5, gameEngine.Board.Grid);
+                        action = this.EpsilonGreedyAction(0.15, gameEngine.Board.Grid);
                         gameEngine.MakeMove(action);
                         int opponentACtion = oppositeAi.SelectMove(gameEngine.Board.Grid);
                         gameEngine.MakeMove(opponentACtion);

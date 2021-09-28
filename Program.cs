@@ -20,6 +20,10 @@ namespace BlazorConnect4
                 Directory.CreateDirectory("./Data");
             }
             //CreateHostBuilder(args).Build().Run();
+
+
+
+            Training();
         }
 
         public static IHostBuilder CreateHostBuilder(string[] args) =>
@@ -36,12 +40,14 @@ namespace BlazorConnect4
             Model.GameEngineTwo gameEngine = new Model.GameEngineTwo();
             AIModels.QAgent leAgent = new AIModels.QAgent();
             AIModels.RandomAI randomAI = new AIModels.RandomAI();
-            leAgent.Workout(gameEngine, randomAI, 1000);
+            leAgent.Workout(gameEngine, randomAI, 10000000);
 
 
             leAgent.ToFile("Data/AwesomeAgent.bin");
 
 
-            }
+            AIModels.QAgent newAgent = (AIModels.QAgent)AIModels.AI.FromFile("Data/AwesomeAgent.bin");
+            Console.WriteLine();
+        }
     }
 }

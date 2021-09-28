@@ -7,6 +7,7 @@ namespace BlazorConnect4.Model
 {
     public enum CellColor
     {
+        
         Red,
         Yellow,
         Blank
@@ -22,6 +23,13 @@ namespace BlazorConnect4.Model
             Color = color;
         }
 
+        
+
+        public override string ToString() // for debugging
+        {
+            return Color.ToString();
+
+        }
     }
 
     public class GameBoard
@@ -50,7 +58,19 @@ namespace BlazorConnect4.Model
             {
                 for (int j = 0; j <= 5; j++)
                 {
-                    copy.Grid[i, j] = this.Grid[i, j];
+                    switch (this.Grid[i, j].Color) //To avoid the references with objects.
+                    {
+                        case CellColor.Blank:
+                            copy.Grid[i, j].Color = CellColor.Blank;
+                            break;
+                        case CellColor.Red:
+                            copy.Grid[i, j].Color = CellColor.Red;
+                            break;
+                        case CellColor.Yellow:
+                            copy.Grid[i, j].Color = CellColor.Yellow;
+                            break;
+
+                    }
                 }
             }
             return copy;
@@ -64,7 +84,7 @@ namespace BlazorConnect4.Model
             {
                 for (int j = 0; j <= 5; j++)
                 {
-                    sb.Append(grid[i, j]);
+                    sb.Append((int)grid[i, j].Color);
                 }
             }
             return sb.ToString();
