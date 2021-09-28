@@ -59,9 +59,17 @@ namespace BlazorConnect4.AIModels
         public Dictionary<String, float[]> Qdict;
         private float reward = 0F;
 
-        public float InvalidMoveReward = -1.0F;
+        // Reward values
+        public float InvalidMoveReward = -0.1F;
         public float WinningMoveReward = 1F;
         public float LosingMoveReward = -1F;
+        public float DrawMoveReward = 0F;
+
+        // Statistics
+        public int wins = 0;
+        public int losses = 0;
+        public int ties = 0;
+        public int invalidMoves = 0;
 
 
         public QAgent()
@@ -163,66 +171,6 @@ namespace BlazorConnect4.AIModels
             return temp;
         }
 
-        /* public void WorkoutYellow(GameEngineTwo gameEngine, AI oppositeAi, int iterations)
-         {
-             for (int i = 0; i < iterations; i++)
-             {
-                 Console.WriteLine(i);
-                 //new Iteration => choose a new action and check if the action is valid
-                 gameEngine.Board = new GameBoard();
-                 bool terminal = false;
-                 int action = 0;
-
-                 int opponentAction = oppositeAi.SelectMove(gameEngine.Board.Grid);
-                 bool isValidAction = gameEngine.MakeMove(opponentAction);
-
-                 while (!terminal)
-                 {
-                     if (!isValidAction)//if the game was a invalid action give all moves from here a negative reward.
-                     {
-                         SetQValue(gameEngine.Board.Grid, action, InvalidMoveReward);
-                         terminal = true; //the move was terminal becuase it was a wrong move;
-                     }
-                     else if (gameEngine.IsWin(gameEngine.PlayerTurn)) // If the game is terminal quit here and give the reward for all actions in this state.
-                     {
-                         SetQValue(gameEngine.Board.Grid, action, WinningMoveReward);
-                         terminal = true;
-                     }
-                     else if (gameEngine.IsWin(GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn)))
-                     {
-                         SetQValue(gameEngine.Board.Grid, action, LosingMoveReward);
-                         terminal = true;
-                     }
-                     else
-                     {
-                         float gamma = 0.9F;
-                         float alpha = 0.5F;
-
-
-                         //The Q value for best next move
-                         GameBoard nextBoardState = gameEngine.Board.Copy();
-                         int bestAction = GetBestAction(nextBoardState.Grid);
-                         GameEngineTwo.MakeMove(ref nextBoardState, gameEngine.PlayerTurn, bestAction);
-                         int oppositeAction = oppositeAi.SelectMove(nextBoardState.Grid);
-                         GameEngineTwo.MakeMove(ref nextBoardState, GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn), oppositeAction);
-                         float maxQvalueNextState = GetQValue(nextBoardState.Grid, bestAction);
-
-
-                         //we should make a new move and then let the opponent make a move
-                         action = this.EpsilonGreedyAction(0.15, gameEngine.Board.Grid);
-                         float currentVal = GetQValue(gameEngine.Board.Grid, action);
-                         // Update value
-                         SetQValue(gameEngine.Board.Grid, action, currentVal + alpha * (gamma + maxQvalueNextState - currentVal));
-                         gameEngine.MakeMove(action);
-                         opponentAction = oppositeAi.SelectMove(gameEngine.Board.Grid);
-                         gameEngine.MakeMove(opponentAction);
-                         isValidAction = gameEngine.MakeMove(action);
-
-                     }
-                 }
-             }
-         }*/
-
         public void WorkoutYellow(GameEngineTwo gameEngine, AI oppositeAi, int iterations)
         {
             for (int i = 0; i < iterations; i++)
@@ -242,25 +190,29 @@ namespace BlazorConnect4.AIModels
 
                 while (!terminal)
                 {
-
-                    if (!isValidAction) //If the game was a invalid action give all moves from here a negative reward.
+                    // TODO look over below statements, cleanup?
+                    if (!isValidAction) // If the game was a invalid action give all moves from here a negative reward.
                     {
-
+                        invalidMoves++;
                         SetQValue(gameEngine.Board.Grid, action, InvalidMoveReward);
-
-                        terminal = true; //the move was terminal because it was a wrong move;
+                        terminal = true; // The move was terminal becuase it was a wrong move;
                     }
-                    else if (gameEngine.IsWin(gameEngine.PlayerTurn))// If the game is terminal quit here and give the reward for all actions in this state.
+                    else if (gameEngine.IsWin(gameEngine.PlayerTurn)) // If the game is terminal quit here and give the reward for all actions in this state.
                     {
-
+                        wins++;
                         SetQValue(gameEngine.Board.Grid, action, WinningMoveReward);
-
                         terminal = true;
                     }
                     else if (gameEngine.IsWin(GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn)))
                     {
-
+                        losses++;
                         SetQValue(gameEngine.Board.Grid, action, LosingMoveReward);
+                        terminal = true;
+                    }
+                    else if (gameEngine.IsDraw())
+                    {
+                        ties++;
+                        SetQValue(gameEngine.Board.Grid, action, DrawMoveReward);
                         terminal = true;
                     }
                     else
@@ -294,41 +246,42 @@ namespace BlazorConnect4.AIModels
 
         public void WorkoutRed(GameEngineTwo gameEngine, AI oppositeAi, int iterations)
         {
-
-
             for (int i = 0; i < iterations; i++)
             {
                 Console.WriteLine(i);
                 //new Iteration => choose a new action and check if the action is valid
                 gameEngine.Board = new GameBoard();
                 bool terminal = false;
-                // Reward defaults to zero
-
+                // Reward defaults to 
                 int action = this.EpsilonGreedyAction(1, gameEngine.Board.Grid);
                 GameBoard boardCopy = gameEngine.Board.Copy();
                 bool isValidAction = GameEngineTwo.MakeMove(ref boardCopy, gameEngine.PlayerTurn, action);
 
                 while (!terminal)
                 {
-
-                    if (!isValidAction)//if the game was a invalid action give all moves from here a negative reward.
+                    // TODO look over below statements, cleanup?
+                    if (!isValidAction) // If the game was a invalid action give all moves from here a negative reward.
                     {
-
+                        invalidMoves++;
                         SetQValue(gameEngine.Board.Grid, action, InvalidMoveReward);
-
-                        terminal = true; //the move was terminal becuase it was a wrong move;
+                        terminal = true; // The move was terminal becuase it was a wrong move;
                     }
-                    else if (gameEngine.IsWin(gameEngine.PlayerTurn))// If the game is terminal quit here and give the reward for all actions in this state.
+                    else if (gameEngine.IsWin(gameEngine.PlayerTurn)) // If the game is terminal quit here and give the reward for all actions in this state.
                     {
-
+                        wins++;
                         SetQValue(gameEngine.Board.Grid, action, WinningMoveReward);
-
                         terminal = true;
                     }
                     else if (gameEngine.IsWin(GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn)))
                     {
-
+                        losses++;
                         SetQValue(gameEngine.Board.Grid, action, LosingMoveReward);
+                        terminal = true;
+                    }
+                    else if (gameEngine.IsDraw())
+                    {
+                        ties++;
+                        SetQValue(gameEngine.Board.Grid, action, DrawMoveReward);
                         terminal = true;
                     }
                     else
@@ -354,7 +307,6 @@ namespace BlazorConnect4.AIModels
                         int opponentACtion = oppositeAi.SelectMove(gameEngine.Board.Grid);
                         gameEngine.MakeMove(opponentACtion);
                         isValidAction = gameEngine.MakeMove(action);
-
                     }
                 }
             }
