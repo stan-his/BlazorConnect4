@@ -57,9 +57,11 @@ namespace BlazorConnect4.AIModels
     {
 
         public Dictionary<String,float[]> Qdict;
-        private int reward = 0;
+        private float reward = 0F;
         private GameEngine gameEngine;
         public float InvalidMoveReward = -1.0F;
+        public float WinningMoveReward = 1F;
+        public float LosingMoveReward = -1F;
 
 
         public QAgent()
@@ -115,7 +117,11 @@ namespace BlazorConnect4.AIModels
 
         public double GetReward(Cell[,] grid, int action)
         {
-            return 0;
+            return reward;
+        }
+        public void SetReward(float terminalReward=0)
+        {
+            reward = terminalReward;
         }
         
         public int QLearning (Cell[,] grid)
@@ -235,6 +241,8 @@ namespace BlazorConnect4.AIModels
                 //new Iteration => choose a new action and check if the action is valid
                 gameEngine.Board = new GameBoard();
                 bool terminal = false;
+                // Reward defaults to zero
+                SetReward();
                 int action = this.EpsilonGreedyAction(0.5, gameEngine.Board.Grid);
                 bool isValidAction = gameEngine.MakeMove(action);
 
@@ -244,20 +252,26 @@ namespace BlazorConnect4.AIModels
                     String stateKey = GameBoard.GetHashStringCode(gameEngine.Board.Grid);
                     GameBoard currentBoard = gameEngine.Board.Copy();
                     
-
                     if (!isValidAction)//if the game was a invalid action give all moves from here a negative reward.
                         {
-
+                        SetReward(InvalidMoveReward);
                         Qdict[stateKey][action] = InvalidMoveReward;
                         terminal = true; //the move was terminal becuase it was a wrong move;
                         }
-                    else if (true)//TODO  if the game is terminal quit here and give the reward for all actions in this state.
+                    else if (gameEngine.IsWin(gameEngine.PlayerTurn))//TODO  if the game is terminal quit here and give the reward for all actions in this state.
                         {
+                        SetReward(WinningMoveReward);
+                        Qdict[stateKey][action] = WinningMoveReward;
                         terminal = true;
                         }
+                    else if (gameEngine.IsWin(GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn)))
+                    {
+                        SetReward(LosingMoveReward);
+                        Qdict[stateKey][action] = LosingMoveReward;
+                        terminal = true;
+                    }
                     else
                         {
-                        float reward = 0; //there are no rewards in a standard state, only in terminal states;
                         float gamma = 0;
                         float alpha = 0.02F;
                         float currentVal = Qdict[stateKey][action];
