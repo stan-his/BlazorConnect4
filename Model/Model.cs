@@ -79,9 +79,6 @@ namespace BlazorConnect4.Model
         public GameBoard Board { get; set; }
         public CellColor PlayerTurn { get; set; }
 
-        public AI playerOne;
-        public AI playerTwo;
-
         public GameEngineTwo()
         {
             Board = new GameBoard();
@@ -279,10 +276,10 @@ namespace BlazorConnect4.Model
             return true;
         }
 
-        public CellColor OtherPlayer(CellColor player)
+        /*public CellColor OtherPlayer(CellColor player)
         {
             return player == CellColor.Red ? CellColor.Yellow : CellColor.Red;
-        }
+        }*/
 
         public bool IsWin(CellColor player)
         {
