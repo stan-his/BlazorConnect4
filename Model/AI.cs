@@ -280,21 +280,21 @@ namespace BlazorConnect4.AIModels
                         GameBoard nextBoardState = gameEngine.Board.Copy();
                         int bestAction = GetBestAction(nextBoardState.Grid);
                         GameEngineTwo.MakeMove(ref nextBoardState, gameEngine.PlayerTurn, bestAction);
+                        int oppositeAction =  oppositeAi.SelectMove(nextBoardState.Grid);
+                        GameEngineTwo.MakeMove(ref nextBoardState, GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn),oppositeAction);
+
                         String keyStuff = GameBoard.GetHashStringCode(nextBoardState.Grid);
                         float maxQvalueNextState = Qdict[keyStuff][bestAction];
                         //update value
                         Qdict[stateKey][action] = currentVal + alpha * (reward + gamma + maxQvalueNextState - currentVal);
 
-
-
+                        
                         //we should make a new move and then let the opponent make a move
 
                         action = this.EpsilonGreedyAction(0.5, gameEngine.Board.Grid);
                         gameEngine.MakeMove(action);
                         int opponentACtion = oppositeAi.SelectMove(gameEngine.Board.Grid);
                         gameEngine.MakeMove(opponentACtion);
-
-
                         isValidAction = gameEngine.MakeMove(action);
 
                         }
