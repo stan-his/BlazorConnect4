@@ -126,8 +126,22 @@ namespace BlazorConnect4.AIModels
 
         public override int SelectMove(Cell[,] grid)
         {
-            double epsilon = 0.99;
-            return EpsilonGreedyAction(epsilon, grid);
+            double epsilon = 0;
+            int action = EpsilonGreedyAction(epsilon, grid);
+            GameBoard temp = new GameBoard();
+            temp.Grid = grid;
+            temp = temp.Copy(); // to avoid the references
+
+            bool validMove = GameEngineTwo.MakeMove(ref temp, CellColor.Red, action);
+            // in the case that the best move is not a validmove, isntead randomize a move until a valid is found
+            Random randomGen = new Random();
+            while (!validMove)
+            {
+
+                action = randomGen.Next(7);
+                validMove = GameEngineTwo.MakeMove(ref temp, CellColor.Red, action);
+            }
+            return action;
         }
 
         public int GetBestAction(Cell[,] state)
@@ -178,11 +192,9 @@ namespace BlazorConnect4.AIModels
             for (int i = 0; i < iterations; i++)
             {
                 Console.WriteLine(i);
-
                 gameEngine.Reset();
                 
                 bool terminal = false;
-                // Reward defaults to zero
 
                 int opponentAction = oppositeAi.SelectMove(gameEngine.Board.Grid);
                 gameEngine.MakeMove(opponentAction);
@@ -232,7 +244,7 @@ namespace BlazorConnect4.AIModels
                         GameEngineTwo.MakeMove(ref nextBoardState, GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn), oppositeAction);
                         float maxQvalueNextState = GetQValue(nextBoardState.Grid, bestAction);
                         //update value
-                        SetQValue(gameEngine.Board.Grid, action, currentVal + alpha * (gamma + maxQvalueNextState - currentVal));
+                        SetQValue(gameEngine.Board.Grid, action, currentVal + alpha * (gamma * maxQvalueNextState - currentVal));
 
                         //we should make a new move and then let the opponent make a move
 
@@ -258,6 +270,7 @@ namespace BlazorConnect4.AIModels
                 //new Iteration => choose a new action and check if the action is valid
                 bool terminal = false;
                 // Reward defaults to 
+                
                 int action = this.EpsilonGreedyAction(1, gameEngine.Board.Grid);
                 GameBoard boardCopy = gameEngine.Board.Copy();
                 bool isValidAction = GameEngineTwo.MakeMove(ref boardCopy, gameEngine.PlayerTurn, action);
@@ -303,10 +316,10 @@ namespace BlazorConnect4.AIModels
                         GameEngineTwo.MakeMove(ref nextBoardState, GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn), oppositeAction);
                         float maxQvalueNextState = GetQValue(nextBoardState.Grid, bestAction);
                         //update value
-                        SetQValue(gameEngine.Board.Grid, action, currentVal + alpha * (gamma + maxQvalueNextState - currentVal));
+                        SetQValue(gameEngine.Board.Grid, action, currentVal + alpha * (gamma * maxQvalueNextState - currentVal));
 
                         //we should make a new move and then let the opponent make a move
-
+                        
                         action = this.EpsilonGreedyAction(0.15, gameEngine.Board.Grid);
                         gameEngine.MakeMove(action);
                         int opponentACtion = oppositeAi.SelectMove(gameEngine.Board.Grid);
