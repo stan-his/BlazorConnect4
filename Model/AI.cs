@@ -171,13 +171,16 @@ namespace BlazorConnect4.AIModels
             return temp;
         }
 
-        public void WorkoutYellow(GameEngineTwo gameEngine, AI oppositeAi, int iterations)
+        public void WorkoutYellow(AI oppositeAi, int iterations)
         {
+
+            GameEngineTwo gameEngine = new GameEngineTwo();
             for (int i = 0; i < iterations; i++)
             {
                 Console.WriteLine(i);
+
+                gameEngine.Reset();
                 
-                gameEngine.Board = new GameBoard();
                 bool terminal = false;
                 // Reward defaults to zero
 
@@ -244,13 +247,15 @@ namespace BlazorConnect4.AIModels
             }
         }
 
-        public void WorkoutRed(GameEngineTwo gameEngine, AI oppositeAi, int iterations)
+        public void WorkoutRed(AI oppositeAi, int iterations)
         {
+
+            GameEngineTwo gameEngine = new GameEngineTwo();
             for (int i = 0; i < iterations; i++)
             {
+                gameEngine.Reset();
                 Console.WriteLine(i);
                 //new Iteration => choose a new action and check if the action is valid
-                gameEngine.Board = new GameBoard();
                 bool terminal = false;
                 // Reward defaults to 
                 int action = this.EpsilonGreedyAction(1, gameEngine.Board.Grid);

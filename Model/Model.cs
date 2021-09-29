@@ -102,11 +102,18 @@ namespace BlazorConnect4.Model
         public GameEngineTwo()
         {
             Board = new GameBoard();
+            PlayerTurn = CellColor.Red;
         }
 
         public bool IsValid(int col)
         {
             return Board.Grid[col, 0].Color == CellColor.Blank;
+        }
+
+        public void Reset() //resets the gameboard and set the playerturn to red
+        {
+            Board = new GameBoard();
+            PlayerTurn = CellColor.Red;
         }
 
         public bool IsDraw()

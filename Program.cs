@@ -40,7 +40,7 @@ namespace BlazorConnect4
             Model.GameEngineTwo gameEngine = new Model.GameEngineTwo();
             AIModels.QAgent leAgent = new AIModels.QAgent();
             AIModels.RandomAI randomAI = new AIModels.RandomAI();
-            leAgent.WorkoutRed(gameEngine, randomAI, 10000000);
+            leAgent.WorkoutRed( randomAI, 10000000);
 
 
             leAgent.ToFile("Data/AwesomeAgent.bin");
