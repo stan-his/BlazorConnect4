@@ -7,7 +7,6 @@ namespace BlazorConnect4.Model
 {
     public enum CellColor
     {
-        
         Red,
         Yellow,
         Blank
