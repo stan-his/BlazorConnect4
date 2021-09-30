@@ -37,16 +37,37 @@ namespace BlazorConnect4
 
         public static void Training()
             {
-            Model.GameEngineTwo gameEngine = new Model.GameEngineTwo();
-            AIModels.QAgent redAgent = new AIModels.QAgent(Model.CellColor.Red);
-            AIModels.RandomAI randomAI = new AIModels.RandomAI();
-            redAgent.Workout( randomAI, 10000000);
+            
 
 
-            redAgent.ToFile("Data/AwesomeAgent.bin");
+            AIModels.QAgent RedAi = (AIModels.QAgent)AIModels.AI.FromFile("Data/RedV2.bin");
+            AIModels.QAgent YellowAi = (AIModels.QAgent)AIModels.AI.FromFile("Data/YellowV2.bin");
+
+            //AIModels.QAgent RedAi = new AIModels.QAgent(Model.CellColor.Red);
+            //AIModels.QAgent YellowAi = new AIModels.QAgent(Model.CellColor.Yellow);
+
+            //AIModels.RandomAI randomAI = new AIModels.RandomAI();
+            //RedAi.Workout( randomAI, 1000);
 
 
-            AIModels.QAgent newAgent = (AIModels.QAgent)AIModels.AI.FromFile("Data/AwesomeAgent.bin");
+            for (int i = 0; i < 1000; i++)
+            {
+                Console.WriteLine(i);
+                if (i % 2 == 0)
+                {
+                    YellowAi.Workout(RedAi, 1000);
+                }
+                else
+                {
+                    RedAi.Workout(YellowAi, 2000);
+                }
+            }
+
+            RedAi.ToFile("Data/RedV2.bin");
+            YellowAi.ToFile("Data/YellowV2.bin");
+
+
+
             Console.WriteLine();
         }
     }

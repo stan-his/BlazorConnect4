@@ -2,6 +2,7 @@
 using System.IO;
 using BlazorConnect4.AIModels;
 using System.Linq;
+using System.Diagnostics;
 
 namespace BlazorConnect4.Model
 {
@@ -108,7 +109,10 @@ namespace BlazorConnect4.Model
         {
             return Board.Grid[col, 0].Color == CellColor.Blank;
         }
-
+        public  static bool IsValid(Cell[,] state , int col)
+        {
+            return state[col, 0].Color == CellColor.Blank;
+        }
         public void Reset() //resets the gameboard and set the playerturn to red
         {
             Board = new GameBoard();
@@ -126,10 +130,86 @@ namespace BlazorConnect4.Model
             }
             return true;
         }
+        public static bool IsDraw(GameBoard gameboard , int action)
+        {
+            GameBoard temp = gameboard.Copy();
+            GameEngineTwo.MakeMove(ref temp, CellColor.Yellow, action);
+
+            for (int i = 0; i < 7; i++)
+            {
+                if (temp.Grid[i, 0].Color == CellColor.Blank)
+                {
+                    return false;
+                }
+            }
+            return true;
+        }
 
         public static CellColor OtherPlayer(CellColor player)
         {
             return player == CellColor.Red ? CellColor.Yellow : CellColor.Red;
+        }
+        public static bool IsWin(GameBoard gameBoard, int action,CellColor player)
+        {
+            int height = 6;
+            int width = 7;
+            bool isWin = false;
+            GameBoard temp = gameBoard.Copy();
+            bool validmove = GameEngineTwo.MakeMove(ref temp ,player,action);
+            Cell[,] state = temp.Grid;
+            Debug.Assert(validmove);
+            
+            // horizontalCheck 
+            for (int j = 0; j < height - 3; j++)
+            {
+                for (int i = 0; i < width; i++)
+                {
+                    if (state[i, j].Color == player && state[i, j + 1].Color == player && state[i, j + 2].Color == player && state[i, j + 3].Color == player)
+                    {
+                        isWin = true;
+                    }
+                }
+            }
+            if (isWin == false)
+            {
+                // verticalCheck
+                for (int i = 0; i < width - 3; i++)
+                {
+                    for (int j = 0; j < height; j++)
+                    {
+                        if (state[i, j].Color == player && state[i + 1, j].Color == player && state[i + 2, j].Color == player && state[i + 3, j].Color == player)
+                        {
+                            isWin = true;
+                        }
+                    }
+                }
+            }
+            if (isWin == false)
+            {
+                // ascendingDiagonalCheck 
+                for (int i = 3; i < width; i++)
+                {
+                    for (int j = 0; j < height - 3; j++)
+                    {
+                        if (state[i, j].Color == player && state[i - 1, j + 1].Color == player && state[i - 2, j + 2].Color == player && state[i - 3, j + 3].Color == player)
+                            isWin = true;
+                    }
+                }
+            }
+
+            if (isWin == false)
+            {
+                // descendingDiagonalCheck
+                for (int i = 3; i < width; i++)
+                {
+                    for (int j = 3; j < height; j++)
+                    {
+                        if (state[i, j].Color == player && state[i - 1, j - 1].Color == player && state[i - 2, j - 2].Color == player && state[i - 3, j - 3].Color == player)
+                            isWin = true;
+                    }
+                }
+            }
+            return isWin;
         }
 
         public bool IsWin(CellColor player)
@@ -279,7 +359,7 @@ namespace BlazorConnect4.Model
             }
             else if (playAgainst == "Q3")
             {
-                ai = new RandomAI();
+                ai = QAgent.FromFile("Data/YellowV2.bin");
             }
 
         }

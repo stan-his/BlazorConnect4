@@ -2,6 +2,7 @@
 using BlazorConnect4.Model;
 using System.Collections.Generic;
 using System.IO;
+using System.Diagnostics;
 
 namespace BlazorConnect4.AIModels
 {
@@ -57,10 +58,10 @@ namespace BlazorConnect4.AIModels
     {
 
         public Dictionary<String, float[]> Qdict;
-        private float reward = 0F;
+       
         private static CellColor PlayerColor;
         // Reward values
-        public float InvalidMoveReward = -0.1F;
+        public float InvalidMoveReward = -0.5F;
         public float WinningMoveReward = 1F;
         public float LosingMoveReward = -1F;
         public float DrawMoveReward = 0F;
@@ -71,11 +72,14 @@ namespace BlazorConnect4.AIModels
         public int ties = 0;
         public int invalidMoves = 0;
 
+        
+
 
         public QAgent(CellColor playerColor)
         {
             PlayerColor = playerColor;
             Qdict = new Dictionary<String, float[]>();
+            
         }
 
 
@@ -112,35 +116,20 @@ namespace BlazorConnect4.AIModels
         }
 
 
-
-
-        public double GetReward(Cell[,] grid, int action)
-        {
-            return reward;
-        }
-        public void SetReward(float terminalReward = 0)
-        {
-            reward = terminalReward;
-        }
-
-
         public override int SelectMove(Cell[,] grid)
         {
-            double epsilon = 0;
+            double epsilon = -0;
             int action = EpsilonGreedyAction(epsilon, grid);
-            GameBoard temp = new GameBoard();
-            temp.Grid = grid;
-            temp = temp.Copy(); // to avoid the references
-
-            bool validMove = GameEngineTwo.MakeMove(ref temp, CellColor.Red, action);
+            bool validMove = GameEngineTwo.IsValid(grid, action);
             // in the case that the best move is not a validmove, isntead randomize a move until a valid is found
             Random randomGen = new Random();
             while (!validMove)
             {
 
                 action = randomGen.Next(7);
-                validMove = GameEngineTwo.MakeMove(ref temp, CellColor.Red, action);
+                validMove = GameEngineTwo.IsValid(grid, action);
             }
+            Debug.Assert(GameEngineTwo.IsValid(grid, action));
             return action;
         }
 
@@ -159,22 +148,42 @@ namespace BlazorConnect4.AIModels
                     value = GetQValue(state, i);
                 }
             }
+            bool validMove = GameEngineTwo.IsValid(state, action);
+            Random randomGen = new Random();
+            while (!validMove)
+            {
+
+                action = randomGen.Next(0,7);
+                validMove = GameEngineTwo.IsValid(state, action);
+            }
+
             return action;
         }
 
         public int EpsilonGreedyAction(double epsilon, Cell[,] state)
         {
             Random random = new Random();
+            int action = -1;
             if (random.NextDouble() < epsilon)
             {
-                // Make a random move
-                return random.Next(0, 7);
+                action = random.Next(0, 7);
+                while (!GameEngineTwo.IsValid(state, action))
+                {
+                    action = random.Next(0, 7);
+                }
+                
             }
             else
             {
                 // Make highest valued move
-                return GetBestAction(state);
+                action = GetBestAction(state);
+                while (!GameEngineTwo.IsValid(state, action))
+                {
+                    action = random.Next(0, 7);
+                }
             }
+            Debug.Assert(GameEngineTwo.IsValid(state, action));
+            return action;
         }
 
         public static QAgent ConstructFromFile(string fileName)
@@ -188,28 +197,19 @@ namespace BlazorConnect4.AIModels
         public bool IsTerminalState(GameEngineTwo gameEngine, int action, CellColor playerColor)
         {
             bool isTerminalState = false;
-            GameBoard boardCopy = gameEngine.Board.Copy();
-            bool isValidAction = GameEngineTwo.MakeMove(ref boardCopy, gameEngine.PlayerTurn, action);
-
-            if (!isValidAction) // If the game was a invalid action give all moves from here a negative reward.
-            {
-                invalidMoves++;
-                SetQValue(gameEngine.Board.Grid, action, InvalidMoveReward);
-                isTerminalState = true; // The move was terminal becuase it was a wrong move;
-            }
-            else if (gameEngine.IsWin(playerColor)) // If the game is terminal quit here and give the reward for all actions in this state.
+            if (GameEngineTwo.IsWin(gameEngine.Board,action,playerColor)) // If the game is terminal quit here and give the reward for all actions in this state.
             {
                 wins++;
                 SetQValue(gameEngine.Board.Grid, action, WinningMoveReward);
                 isTerminalState = true;
             }
-            else if (gameEngine.IsWin(GameEngineTwo.OtherPlayer(playerColor)))
+            else if (GameEngineTwo.IsWin(gameEngine.Board, action, GameEngineTwo.OtherPlayer(playerColor)))
             {
                 losses++;
                 SetQValue(gameEngine.Board.Grid, action, LosingMoveReward);
                 isTerminalState = true;
             }
-            else if (gameEngine.IsDraw())
+            else if (GameEngineTwo.IsDraw(gameEngine.Board,action))
             {
                 ties++;
                 SetQValue(gameEngine.Board.Grid, action, DrawMoveReward);
@@ -220,12 +220,13 @@ namespace BlazorConnect4.AIModels
 
         public void Workout(AI oppositeAi, int iterations)
         {
+            double epsilon = 0.7;
             GameEngineTwo gameEngine = new GameEngineTwo();
             int opponentAction;
             CellColor opponenentColor = GameEngineTwo.OtherPlayer(PlayerColor);
             for (int i = 0; i < iterations; i++)
             {
-                Console.WriteLine(i);
+                //Console.WriteLine(i);
                 gameEngine.Reset();
 
                 bool terminal = false;
@@ -236,7 +237,8 @@ namespace BlazorConnect4.AIModels
                 }
 
                 //new iteration (new game) => choose a new action and check if the action is valid
-                int action = this.EpsilonGreedyAction(1, gameEngine.Board.Grid);
+                int action = EpsilonGreedyAction(epsilon, gameEngine.Board.Grid);
+                Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, action));
 
                 while (!terminal)
                 {
@@ -245,26 +247,36 @@ namespace BlazorConnect4.AIModels
                     float currentVal = GetQValue(gameEngine.Board.Grid, action);
 
                     //The Q value for best next move
+
+
                     GameBoard nextBoardState = gameEngine.Board.Copy();
-                    int bestAction = GetBestAction(nextBoardState.Grid);
-                    GameEngineTwo.MakeMove(ref nextBoardState, gameEngine.PlayerTurn, bestAction);
+                    int bestAction1 = EpsilonGreedyAction(-1,gameEngine.Board.Grid); // best action by epsilon -1
+                    Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, bestAction1));
+                    GameEngineTwo.MakeMove(ref nextBoardState, gameEngine.PlayerTurn, bestAction1);
                     int oppositeAction = oppositeAi.SelectMove(nextBoardState.Grid);
+                    Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, oppositeAction));
                     GameEngineTwo.MakeMove(ref nextBoardState, GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn), oppositeAction);
-                    float maxQvalueNextState = GetQValue(nextBoardState.Grid, bestAction);
+                    int bestAction2 = EpsilonGreedyAction(-1, gameEngine.Board.Grid);
+                    Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, bestAction2));
+                    float maxQvalueNextState = GetQValue(nextBoardState.Grid, bestAction2);
                     //update value
                     SetQValue(gameEngine.Board.Grid, action, currentVal + alpha * (gamma * maxQvalueNextState - currentVal));
 
                     //we should make a new move and then let the opponent make a move
 
-                    action = this.EpsilonGreedyAction(0.15, gameEngine.Board.Grid);
-                    gameEngine.MakeMove(action);
+                    action = EpsilonGreedyAction(epsilon, gameEngine.Board.Grid);
+                    
+                    Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, action));
                     terminal = IsTerminalState(gameEngine, action, PlayerColor);
+                    gameEngine.MakeMove(action);
                     // If players move is not terminal, make opponentAi move
                     if (!terminal)
                     {
                         opponentAction = oppositeAi.SelectMove(gameEngine.Board.Grid);
-                        gameEngine.MakeMove(opponentAction);
+                        Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, opponentAction));
                         terminal = IsTerminalState(gameEngine, opponentAction, opponenentColor);
+                        gameEngine.MakeMove(opponentAction);
+                        
                     }
                 }
             }
