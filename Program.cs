@@ -50,7 +50,7 @@ namespace BlazorConnect4
             //RedAi.Workout( randomAI, 1000);
 
 
-            for (int i = 0; i < 1000; i++)
+            for (int i = 0; i < 100; i++)
             {
                 Console.WriteLine(i);
                 if (i % 2 == 0)
@@ -59,7 +59,7 @@ namespace BlazorConnect4
                 }
                 else
                 {
-                    RedAi.Workout(YellowAi, 2000);
+                    RedAi.Workout(YellowAi, 4000);
                 }
             }
 

@@ -96,7 +96,7 @@ namespace BlazorConnect4.AIModels
             }
             else
             {
-                float[] actions = { 0, 0, 0, 0, 0, 0, 0 }; // fill array with zeros
+                float[] actions = { 0, 0, 0, 0, 0, 0, 0 }; // fill array with zeros //TODO , could be better with random values instead
                 Qdict.Add(key, actions);
                 return 0;
             }
@@ -220,46 +220,52 @@ namespace BlazorConnect4.AIModels
 
         public void Workout(AI oppositeAi, int iterations)
         {
-            double epsilon = 0.7;
+            double epsilon = 0.7F;
+            float gamma = 0.9F;
+            float alpha = 0.5F;
+
             GameEngineTwo gameEngine = new GameEngineTwo();
             int opponentAction;
             CellColor opponenentColor = GameEngineTwo.OtherPlayer(PlayerColor);
             for (int i = 0; i < iterations; i++)
             {
-                //Console.WriteLine(i);
+                // new iteration, reset the gameBoard and playerturn
                 gameEngine.Reset();
-
                 bool terminal = false;
+
                 if (PlayerColor == CellColor.Yellow)
                 {
-                    opponentAction = oppositeAi.SelectMove(gameEngine.Board.Grid);
+                    //opponentAction = oppositeAi.SelectMove(gameEngine.Board.Grid);
+                    opponentAction = EpsilonGreedyAction(1,gameEngine.Board.Grid); 
                     gameEngine.MakeMove(opponentAction);
                 }
 
-                //new iteration (new game) => choose a new action and check if the action is valid
                 int action = EpsilonGreedyAction(epsilon, gameEngine.Board.Grid);
                 Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, action));
 
                 while (!terminal)
                 {
-                    float gamma = 0.9F;
-                    float alpha = 0.5F;
-                    float currentVal = GetQValue(gameEngine.Board.Grid, action);
+
+                    float currentVal = GetQValue(gameEngine.Board.Grid, action);  //Q(s,a)
 
                     //The Q value for best next move
-
-
+                    //Q(a',s')
                     GameBoard nextBoardState = gameEngine.Board.Copy();
                     int bestAction1 = EpsilonGreedyAction(-1,gameEngine.Board.Grid); // best action by epsilon -1
                     Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, bestAction1));
                     GameEngineTwo.MakeMove(ref nextBoardState, gameEngine.PlayerTurn, bestAction1);
+
+
                     int oppositeAction = oppositeAi.SelectMove(nextBoardState.Grid);
                     Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, oppositeAction));
                     GameEngineTwo.MakeMove(ref nextBoardState, GameEngineTwo.OtherPlayer(gameEngine.PlayerTurn), oppositeAction);
+
                     int bestAction2 = EpsilonGreedyAction(-1, gameEngine.Board.Grid);
                     Debug.Assert(GameEngineTwo.IsValid(gameEngine.Board.Grid, bestAction2));
                     float maxQvalueNextState = GetQValue(nextBoardState.Grid, bestAction2);
                     //update value
+
+                    //                                        Q(a,s)    + alpha * (gamma * Max(Q(a',s))       - Q(s,a)                                  
                     SetQValue(gameEngine.Board.Grid, action, currentVal + alpha * (gamma * maxQvalueNextState - currentVal));
 
                     //we should make a new move and then let the opponent make a move
@@ -281,7 +287,7 @@ namespace BlazorConnect4.AIModels
                 }
             }
         }
-
+        /*
         public void WorkoutRed(AI oppositeAi, int iterations)
         {
 
@@ -352,6 +358,7 @@ namespace BlazorConnect4.AIModels
                 }
             }
         }
+        */
     }
 
 }
